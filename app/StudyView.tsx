@@ -5,7 +5,6 @@ import ReactMarkdown from 'react-markdown';
 import remarkMath from 'remark-math';
 import rehypeKatex from 'rehype-katex';
 
-// PRE-CONFIGURED WITH YOUR REAL SUPABASE STORAGE BUCKET LINKS
 const BOOKS = [
   { id: 'biology', name: 'Biology', file: 'https://supabase.co' },
   { id: 'designzuragzui', name: 'Design Zuragzui', file: 'https://supabase.co' },
@@ -20,7 +19,7 @@ const BOOKS = [
   { id: 'uranzohiol', name: 'Uran Zohiol', file: 'https://supabase.co' },
 ];
 
-export default function StudyView({ apiKey }: { apiKey: string; user: any }) {
+export default function StudyView({ apiKey }: { apiKey: string; user?: any }) {
   const [selectedBook, setSelectedBook] = useState(BOOKS[0]?.file || '');
   const [pageNumber, setPageNumber] = useState(1);
   const [taskType, setTaskType] = useState('Explain this page clearly');
@@ -33,15 +32,27 @@ export default function StudyView({ apiKey }: { apiKey: string; user: any }) {
   const renderPdfPageToBase64 = async (pdfUrl: string, pageNum: number): Promise<string> => {
     const pdfjs = await import('pdfjs-dist');
     pdfjs.GlobalWorkerOptions.workerSrc = `//://unpkg.com{pdfjs.version}/build/pdf.worker.min.mjs`;
-    const pdf = await pdfjs.getDocument(pdfUrl).promise;
+    
+    // Explicitly typed as string option object
+    const loadingTask = pdfjs.getDocument({ url: pdfUrl });
+    const pdf = await loadingTask.promise;
     const page = await pdf.getPage(pageNum);
     const viewport = page.getViewport({ scale: 1.5 });
+    
     const canvas = document.createElement('canvas');
     const context = canvas.getContext('2d')!;
     canvas.height = viewport.height;
     canvas.width = viewport.width;
-    await page.render({ canvasContext: context, viewport }).promise;
-    return canvas.toDataURL('image/jpeg', 0.8).split(',')[1];
+    
+    // Fixed parameters: added missing canvas reference object
+    await page.render({ 
+      canvasContext: context, 
+      viewport,
+      canvas: canvas 
+    } as any).promise;
+    
+    const dataUrl = canvas.toDataURL('image/jpeg', 0.8);
+    return dataUrl.split(',')[1] || '';
   };
 
   const handleAskAI = async () => {
