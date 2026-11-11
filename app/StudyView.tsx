@@ -6,21 +6,21 @@ import remarkMath from 'remark-math';
 import rehypeKatex from 'rehype-katex';
 
 const BOOKS = [
-  { id: 'biology', name: 'Biology', file: 'https://supabase.co' },
-  { id: 'designzuragzui', name: 'Design Zuragzui', file: 'https://supabase.co' },
-  { id: 'iregniiyoszui', name: 'Iregnii Yoszui', file: 'https://supabase.co' },
-  { id: 'khimi', name: 'Chemistry (Khimi)', file: 'https://supabase.co' },
-  { id: 'matematic', name: 'Mathematics (Matematic)', file: 'https://supabase.co' },
-  { id: 'medeelliintechnology', name: 'Medeelliin Technology', file: 'https://supabase.co' },
-  { id: 'mongoliintuukh', name: 'Mongolian History (Tuukh)', file: 'https://supabase.co' },
-  { id: 'mongolkhel', name: 'Mongolian Language (Khel)', file: 'https://supabase.co' },
-  { id: 'niigemsudlal', name: 'Niigem Sudlal', file: 'https://supabase.co' },
-  { id: 'physic', name: 'Physics (Physic)', file: 'https://supabase.co' },
-  { id: 'uranzohiol', name: 'Uran Zohiol', file: 'https://supabase.co' },
+  { id: 'biology', name: '🧬 Biology', file: 'https://supabase.co' },
+  { id: 'designzuragzui', name: '🎨 Design Zuragzui', file: 'https://supabase.co' },
+  { id: 'iregniiyoszui', name: '⚖️ Iregnii Yoszui', file: 'https://supabase.co' },
+  { id: 'khimi', name: '🧪 Chemistry (Khimi)', file: 'https://supabase.co' },
+  { id: 'matematic', name: '📐 Mathematics (Matematic)', file: 'https://supabase.co' },
+  { id: 'medeelliintechnology', name: '💻 Medeelliin Technology', file: 'https://supabase.co' },
+  { id: 'mongoliintuukh', name: '🐎 Mongolian History (Tuukh)', file: 'https://supabase.co' },
+  { id: 'mongolkhel', name: '🇲🇳 Mongolian Language (Khel)', file: 'https://supabase.co' },
+  { id: 'niigemsudlal', name: '🌍 Niigem Sudlal', file: 'https://supabase.co' },
+  { id: 'physic', name: '⚡ Physics (Physic)', file: 'https://supabase.co' },
+  { id: 'uranzohiol', name: '📖 Uran Zohiol', file: 'https://supabase.co' },
 ];
 
 export default function StudyView({ apiKey }: { apiKey: string; user?: any }) {
-  const [selectedBook, setSelectedBook] = useState(BOOKS[0]?.file || '');
+  const [selectedBook, setSelectedBook] = useState(BOOKS[0].file);
   const [pageNumber, setPageNumber] = useState(1);
   const [taskType, setTaskType] = useState('Explain this page clearly');
   const [customPrompt, setCustomPrompt] = useState('');
@@ -33,7 +33,6 @@ export default function StudyView({ apiKey }: { apiKey: string; user?: any }) {
     const pdfjs = await import('pdfjs-dist');
     pdfjs.GlobalWorkerOptions.workerSrc = `//://unpkg.com{pdfjs.version}/build/pdf.worker.min.mjs`;
     
-    // Explicitly typed as string option object
     const loadingTask = pdfjs.getDocument({ url: pdfUrl });
     const pdf = await loadingTask.promise;
     const page = await pdf.getPage(pageNum);
@@ -44,27 +43,30 @@ export default function StudyView({ apiKey }: { apiKey: string; user?: any }) {
     canvas.height = viewport.height;
     canvas.width = viewport.width;
     
-    // Fixed parameters: added missing canvas reference object
     await page.render({ 
       canvasContext: context, 
       viewport,
       canvas: canvas 
     } as any).promise;
     
-    const dataUrl = canvas.toDataURL('image/jpeg', 0.8);
-    return dataUrl.split(',')[1] || '';
+    return canvas.toDataURL('image/jpeg', 0.8).split(',')[1];
   };
 
   const handleAskAI = async () => {
     setError('');
     setAiResponse('');
-    if (!apiKey) return setError('Paste your Gemini key in Settings first.');
+    if (!apiKey) return setError('⚠️ Key required. Drop your Gemini token into settings first.');
 
     setLoading(true);
     try {
       const base64Data = await renderPdfPageToBase64(selectedBook, pageNumber);
-      const promptRules = { Short: 'Answer in 2 sentences.', Medium: 'Answer in 1 standard paragraph.', Long: 'Answer in 3 paragraphs.' };
-      const systemPrompt = `You are a tutor. Flowing paragraphs only. No lists, bullet points, or markdown titles. Wrap math in LaTeX delimiters like $x^2$ or $$y=mx+b$$. Length: ${promptRules[lengthMode]}`;
+      const promptRules = { 
+        Short: 'Summarize compactly in 2 clean, punchy sentences.', 
+        Medium: 'Explain beautifully inside 1 rich paragraph.', 
+        Long: 'Provide an itemized breakdown across 3 professional paragraphs.' 
+      };
+      
+      const systemPrompt = `You are an elite AI highschool tutor. Deliver logical, direct paragraphs. No raw markdown tags, bullet lists, or massive headers. Wrap complex math in LaTeX delimiters like $x^2$. Length instruction: ${promptRules[lengthMode]}`;
 
       const res = await fetch(`https://googleapis.com{apiKey}`, {
         method: 'POST',
@@ -77,50 +79,100 @@ export default function StudyView({ apiKey }: { apiKey: string; user?: any }) {
 
       const result = await res.json();
       if (!res.ok) throw new Error();
-      setAiResponse(result.candidates?.[0]?.content?.parts?.[0]?.text || 'No answer generated.');
+      setAiResponse(result.candidates?.[0]?.content?.parts?.[0]?.text || 'Tutor was unable to parse this page.');
     } catch {
-      setError('AI request failed. Check page number or API key.');
+      setError('Connection refused. Verify your page index or try another API token.');
     } finally {
       setLoading(false);
     }
   };
 
   return (
-    <div className="space-y-6">
-      <div className="bg-slate-900 border border-slate-800 rounded-xl p-6 space-y-4">
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-          <div>
-            <label className="block text-xs text-slate-400 mb-1">Choose Subject Book</label>
-            <select value={selectedBook} onChange={(e) => setSelectedBook(e.target.value)} className="w-full bg-slate-950 border border-slate-800 rounded-lg px-3 py-2 text-sm text-slate-100">
+    <div className="max-w-4xl mx-auto space-y-8 px-4 py-6 text-slate-100 font-sans selection:bg-indigo-500/30">
+      
+      {/* Header Panel */}
+      <div className="flex flex-col md:flex-row md:items-center md:justify-between border-b border-slate-800/60 pb-6 gap-4">
+        <div>
+          <h1 className="text-2xl font-bold bg-clip-text text-transparent bg-gradient-to-r from-indigo-400 via-purple-400 to-pink-400 tracking-tight">
+            Class Terminal AI
+          </h1>
+          <p className="text-xs text-slate-400 mt-1">Multi-Subject Textbook Parsing Engine</p>
+        </div>
+        <div className="flex items-center gap-2 self-start md:self-auto bg-slate-900/60 border border-slate-800/80 px-3 py-1.5 rounded-lg">
+          <div className="w-2 h-2 rounded-full bg-emerald-500 animate-pulse"></div>
+          <span className="text-xs text-slate-300 font-medium font-mono">Workspace Node: Stable</span>
+        </div>
+      </div>
+
+      {/* Primary Configuration Workspace */}
+      <div className="bg-gradient-to-b from-slate-900 to-slate-950 border border-slate-800/80 rounded-2xl p-6 shadow-xl relative overflow-hidden backdrop-blur-sm">
+        <div className="absolute top-0 right-0 w-64 h-64 bg-indigo-500/5 rounded-full blur-3xl pointer-events-none"></div>
+        
+        <div className="grid grid-cols-1 md:grid-cols-3 gap-5">
+          <div className="md:col-span-2">
+            <label className="block text-xs font-semibold uppercase tracking-wider text-indigo-400 mb-2">Subject Textbook</label>
+            <select 
+              value={selectedBook} 
+              onChange={(e) => setSelectedBook(e.target.value)} 
+              className="w-full bg-slate-950/80 border border-slate-800 rounded-xl px-4 py-3 text-sm text-slate-200 transition focus:outline-none focus:border-indigo-500 focus:ring-1 focus:ring-indigo-500/20 cursor-pointer"
+            >
               {BOOKS.map((b) => <option key={b.id} value={b.file}>{b.name}</option>)}
             </select>
           </div>
+
           <div>
-            <label className="block text-xs text-slate-400 mb-1">PDF Page Number</label>
-            <input type="number" min={1} value={pageNumber} onChange={(e) => setPageNumber(Number(e.target.value))} className="w-full bg-slate-950 border border-slate-800 rounded-lg px-3 py-2 text-sm text-slate-100" />
+            <label className="block text-xs font-semibold uppercase tracking-wider text-indigo-400 mb-2">Target Page</label>
+            <input 
+              type="number" 
+              min={1} 
+              value={pageNumber} 
+              onChange={(e) => setPageNumber(Number(e.target.value))} 
+              className="w-full bg-slate-950/80 border border-slate-800 rounded-xl px-4 py-3 text-sm text-slate-200 focus:outline-none focus:border-indigo-500 focus:ring-1 focus:ring-indigo-500/20 font-mono" 
+            />
           </div>
         </div>
-        <div>
-          <label className="block text-xs text-slate-400 mb-1">What should the AI do?</label>
-          <input type="text" placeholder="Optional: Type specific question (e.g., Solve problem #4)" value={customPrompt} onChange={(e) => setCustomPrompt(e.target.value)} className="w-full bg-slate-950 border border-slate-800 rounded-lg px-3 py-2 text-sm text-slate-100" />
+
+        <div className="mt-5">
+          <label className="block text-xs font-semibold uppercase tracking-wider text-indigo-400 mb-2">AI Execution Directive</label>
+          <input 
+            type="text" 
+            placeholder="Describe action (e.g., Explain Section 3, transcribing formulas, breaking down diagrams...)" 
+            value={customPrompt} 
+            onChange={(e) => setCustomPrompt(e.target.value)} 
+            className="w-full bg-slate-950/80 border border-slate-800 rounded-xl px-4 py-3 text-sm text-slate-200 placeholder-slate-600 focus:outline-none focus:border-indigo-500 focus:ring-1 focus:ring-indigo-500/20" 
+          />
         </div>
-        <div>
-          <label className="block text-xs text-slate-400 mb-1">Answer Length</label>
-          <div className="flex gap-2">
+
+        <div className="mt-5">
+          <label className="block text-xs font-semibold uppercase tracking-wider text-indigo-400 mb-2">Response Resolution Profile</label>
+          <div className="grid grid-cols-3 gap-3 p-1 bg-slate-950/80 border border-slate-800/80 rounded-xl">
             {(['Short', 'Medium', 'Long'] as const).map((l) => (
-              <button key={l} onClick={() => setLengthMode(l)} className={`flex-1 py-1.5 border text-sm rounded-lg ${lengthMode === l ? 'bg-indigo-600 border-indigo-500' : 'bg-slate-950 border-slate-800'}`}>{l}</button>
+              <button 
+                key={l} 
+                onClick={() => setLengthMode(l)} 
+                className={`py-2 text-xs font-medium rounded-lg transition-all ${
+                  lengthMode === l 
+                    ? 'bg-gradient-to-r from-indigo-600 to-purple-600 text-white shadow-md' 
+                    : 'text-slate-400 hover:text-slate-200 hover:bg-slate-900/50'
+                }`}
+              >
+                {l} Summary
+              </button>
             ))}
           </div>
         </div>
-        {error && <p className="text-red-400 text-sm">{error}</p>}
-        <button onClick={handleAskAI} disabled={loading} className="w-full bg-indigo-600 py-2.5 rounded-xl font-semibold text-sm transition-colors hover:bg-indigo-500 disabled:bg-slate-800 disabled:text-slate-500">{loading ? 'AI is analyzing textbook page...' : 'Ask AI Tutor'}</button>
-      </div>
 
-      {aiResponse && (
-        <div className="bg-slate-900 border border-slate-800 rounded-xl p-6 leading-relaxed space-y-4 text-slate-200">
-          <ReactMarkdown remarkPlugins={[remarkMath]} rehypePlugins={[rehypeKatex]}>{aiResponse}</ReactMarkdown>
-        </div>
-      )}
-    </div>
-  );
-}
+        {error && (
+          <div className="mt-4 p-3 bg-red-950/40 border border-red-900/50 rounded-xl flex items-center gap-2.5 text-red-400 text-xs font-medium">
+            <span>{error}</span>
+          </div>
+        )}
+
+        <button 
+          onClick={handleAskAI} 
+          disabled={loading} 
+          className="w-full mt-6 bg-gradient-to-r from-indigo-500 via-purple-500 to-pink-500 text-white py-3.5 rounded-xl font-bold text-sm tracking-wide shadow-lg shadow-indigo-500/10 hover:shadow-indigo-500/20 transition-all transform hover:-translate-y-0.5 active:translate-y-0 disabled:from-slate-800 disabled:to-slate-850 disabled:text-slate-500 disabled:transform-none disabled:shadow-none cursor-pointer"
+        >
+          {loading ? (
+            <div className="flex items-center justify-center gap-2">
+              <svg className="animate-spin h-4 w-4 text-slate-400" viewBox="0 0 24 24" fill="none">
